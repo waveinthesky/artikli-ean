@@ -457,15 +457,15 @@
       resultInfo.textContent = 'Pronađeno: ' + matches.length;
 
       mainResult.innerHTML = `
+        <div class="big-tile" style="margin-bottom:14px;">
+          <small>Zadnja nabavna s PDVom</small>
+          <strong>${(parseFloat(first.zadnjaNabavnaSPDVom) || 0).toFixed(3)}</strong>
+        </div>
         <div class="product-name">${escapeHtml(first.naziv || '-')}</div>
         <div class="big-grid">
           <div class="big-tile">
             <small>Stanje</small>
             <strong>${escapeHtml(first.stanje ?? '-')}</strong>
-          </div>
-          <div class="big-tile">
-            <small>Zadnja nabavna s PDVom</small>
-            <strong>${escapeHtml(first.zadnjaNabavnaSPDVom ?? '-')}</strong>
           </div>
         </div>
         <div class="bottom-strip">
