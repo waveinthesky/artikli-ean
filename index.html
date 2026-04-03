@@ -3,61 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pretraga artikala</title>
+  <title>Artikli PRO</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #eef3fa;
       --card: #ffffff;
       --text: #172033;
       --muted: #6b7a90;
-      --line: #e2e8f3;
-      --primary: #1947d1;
-      --soft: #edf3ff;
-      --danger: #d92d20;
+      --line: #dfe7f2;
+      --primary: #1849d6;
+      --primary-soft: #edf3ff;
       --ok: #067647;
-      --radius: 18px;
-      --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+      --danger: #d92d20;
+      --radius: 22px;
+      --shadow: 0 14px 32px rgba(17,24,39,.08);
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
+      background: linear-gradient(180deg, #f4f7fb 0%, #eef3fa 100%);
       color: var(--text);
     }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 12px; }
-    .header { margin-bottom: 12px; }
-    h1 { margin: 0; font-size: 28px; }
-    .sub { margin-top: 6px; color: var(--muted); font-size: 14px; }
-    .top-box, .card {
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+    .card {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 14px;
     }
-    .top-box { margin-bottom: 14px; }
-    .primary-search { display: grid; gap: 10px; margin-bottom: 12px; }
-    .hero-actions, .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .header {
+      display: grid;
+      gap: 4px;
+      padding-top: 6px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.05;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .mini-box {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f8fbff;
+      padding: 12px;
+    }
+    .mini-box small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .mini-box strong {
+      font-size: 19px;
+    }
     input, button {
       width: 100%;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 16px;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 17px;
       background: #fff;
     }
-    button { cursor: pointer; font-weight: bold; }
-    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .btn-soft { background: var(--soft); color: var(--primary); border-color: #dbe7ff; }
+    input:focus {
+      outline: 2px solid #cfe0ff;
+      border-color: #b8cefb;
+    }
+    button {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-soft {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: #d7e5ff;
+    }
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    #reader {
+      width: 100%;
+      display: none;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px dashed #c7d3eb;
+    }
     .status {
       display: none;
-      margin-top: 10px;
       padding: 10px 12px;
       border-radius: 12px;
       font-size: 13px;
@@ -72,41 +132,102 @@
       display: block;
       background: #fff3f2;
       border: 1px solid #ffd0cc;
-      color: #d92d20;
+      color: var(--danger);
     }
-    #reader {
-      width: 100%;
-      display: none;
-      overflow: hidden;
-      border-radius: 14px;
-      border: 1px dashed #c7d3eb;
-      margin-top: 10px;
+    details { margin-top: 4px; }
+    summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      list-style: none;
+      user-select: none;
     }
-    .results { display: grid; gap: 10px; }
-    .item {
+    summary::-webkit-details-marker { display: none; }
+    .upload-box {
+      display: grid;
+      gap: 10px;
+      padding-top: 8px;
+    }
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .fullscreen-product {
+      min-height: 46vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-radius: 26px;
+      padding: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
+    }
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #cad5ea;
+      border-radius: 20px;
+      padding: 28px 16px;
+      background: #fbfcfe;
+    }
+    .product-name {
+      font-size: 31px;
+      line-height: 1.08;
+      font-weight: bold;
+      margin-bottom: 18px;
+      word-break: break-word;
+    }
+    .big-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .big-tile {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
       background: #fff;
     }
-    .name { font-size: 17px; font-weight: bold; margin-bottom: 10px; }
-    .meta { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .pill {
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-    .pill small {
+    .big-tile small {
       display: block;
       color: var(--muted);
-      margin-bottom: 4px;
       font-size: 12px;
+      margin-bottom: 6px;
     }
-    .toolbar { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-    .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
-    @media (min-width: 901px) {
-      .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .big-tile strong {
+      font-size: 26px;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+    .bottom-strip {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .result-count {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .match-list {
+      display: grid;
+      gap: 8px;
+    }
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+    .mini b {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    @media (min-width: 700px) {
+      .big-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -114,44 +235,52 @@
   <div class="wrap">
     <div class="header">
       <h1>Pretraga artikala</h1>
-      <div class="sub">Brzo traženje po EAN-u, nazivu ili barkodu.</div>
-    </div>
-
-    <div class="top-box">
-      <div class="primary-search">
-        <input type="text" id="searchInput" placeholder="Ukucaj EAN, naziv ili šifru" />
-      </div>
-
-      <div class="hero-actions">
-        <button id="scanBtn" class="btn-primary">Skeniraj barkod</button>
-        <button id="stopScanBtn" class="btn-soft">Stop kamera</button>
-      </div>
-
-      <div id="reader"></div>
-
-      <div style="margin-top:12px;">
-        <label style="display:block;font-size:13px;font-weight:bold;margin-bottom:8px;">Excel fajl (.xlsx, .xls, .csv)</label>
-        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
-      </div>
-
-      <div class="btn-row" style="margin-top:10px;">
-        <button id="uploadBtn" class="btn-soft">Dodaj Excel u bazu</button>
-        <button id="refreshBtn" class="btn-soft">Osvježi podatke</button>
-      </div>
-
-      <div id="statusBox" class="status"></div>
-      <div class="small" style="margin-top:10px;">
-        Ova verzija <b>ne briše Firebase bazu</b>. Samo dodaje nove artikle u kolekciju <b>artikli_ean</b>.
-      </div>
+      <div class="sub">Brzo, jasno i bez suvišnih koraka.</div>
     </div>
 
     <div class="card">
-      <h2 style="margin:0 0 12px 0;">Rezultati</h2>
-      <div class="toolbar">
-        <input id="quickSearch" type="text" placeholder="Dodatno filtriranje rezultata..." />
+      <div class="dashboard">
+        <div class="mini-box">
+          <small>Ukupno artikala</small>
+          <strong id="totalItems">0</strong>
+        </div>
+        <div class="mini-box">
+          <small>Zadnje učitavanje</small>
+          <strong id="lastUpdate">-</strong>
+        </div>
       </div>
-      <div id="resultInfo" class="small" style="margin-bottom:10px;">Učitavanje podataka...</div>
-      <div id="results" class="results"></div>
+    </div>
+
+    <div class="card" style="display:grid;gap:12px;">
+      <input type="text" id="searchInput" placeholder="Ukucaj EAN, naziv ili šifru" autofocus />
+      <div class="btn-row">
+        <button id="scanBtn" class="btn-primary">Skeniraj barkod</button>
+        <button id="stopScanBtn" class="btn-soft">Stop kamera</button>
+      </div>
+      <div id="reader"></div>
+      <div id="statusBox" class="status"></div>
+
+      <details>
+        <summary>Upload Excel fajla</summary>
+        <div class="upload-box">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+          <div class="btn-row">
+            <button id="uploadBtn" class="btn-soft">Dodaj Excel u bazu</button>
+            <button id="refreshBtn" class="btn-soft">Osvježi podatke</button>
+          </div>
+          <div class="small">Ova verzija ne briše bazu. Samo dodaje artikle u kolekciju <b>artikli_ean</b>.</div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div id="resultInfo" class="result-count">Učitavanje podataka...</div>
+      <div id="mainResult" class="fullscreen-product"></div>
+    </div>
+
+    <div class="card">
+      <div class="small" style="margin-bottom:10px;">Slični rezultati</div>
+      <div id="otherResults" class="match-list"></div>
     </div>
   </div>
 
@@ -165,19 +294,21 @@
       appId: "1:1080780152624:web:77fed6a3e9b18ad871b2f5"
     };
 
+    const collectionName = 'artikli_ean';
     let db = null;
     let loadedItems = [];
     let scanner = null;
     let cameraRunning = false;
-    const collectionName = 'artikli_ean';
 
-    const statusBox = document.getElementById('statusBox');
-    const fileInput = document.getElementById('fileInput');
     const searchInput = document.getElementById('searchInput');
-    const quickSearch = document.getElementById('quickSearch');
-    const resultsEl = document.getElementById('results');
+    const fileInput = document.getElementById('fileInput');
+    const statusBox = document.getElementById('statusBox');
     const resultInfo = document.getElementById('resultInfo');
+    const mainResult = document.getElementById('mainResult');
+    const otherResults = document.getElementById('otherResults');
     const readerEl = document.getElementById('reader');
+    const totalItemsEl = document.getElementById('totalItems');
+    const lastUpdateEl = document.getElementById('lastUpdate');
 
     function showStatus(message, type = 'ok') {
       statusBox.className = 'status ' + type;
@@ -201,6 +332,19 @@
         .replace(/'/g, '&#039;');
     }
 
+    function updateDashboard() {
+      totalItemsEl.textContent = loadedItems.length;
+      const now = new Date();
+      lastUpdateEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function focusAndClear(delay = 700) {
+      setTimeout(() => {
+        searchInput.value = '';
+        searchInput.focus();
+      }, delay);
+    }
+
     function mapRow(row) {
       const get = (name) => row[name] ?? '';
       return {
@@ -209,19 +353,6 @@
         jm: get('JM'),
         stanje: get('Stanje'),
         zadnjaNabavnaSPDVom: get('Zadnja nabavna s PDVom'),
-        prodajaUPeriodu: get('Prodaja u periodu'),
-        prosjecnaDnevnaProdaja: get('Prosječna dnevna prodaja'),
-        posljednjaProdaja: get('Poslijednja prodaja'),
-        predlogDopune: get('Predlog dopune'),
-        zaPorudzbu: get('Za porudžbu'),
-        brojDanaBezRobe: get('Broj dana bez robe'),
-        pakovanje: get('Pakovanje'),
-        transPak: get('Trans. pak.'),
-        planUPeriodu: get('Plan u periodu'),
-        nabCijena: get('Nab. cijena'),
-        nabVrijednost: get('Nab. vrijednost'),
-        nefinalizovano: get('Nefinalizovano'),
-        brojRazlDobavljaca: get('Broj razl. dobavljača'),
         ean: String(get('EAN') ?? '').trim(),
         nazivNorm: normalizeText(get('Naziv artikla')),
         eanNorm: String(get('EAN') ?? '').replace(/\s+/g, ''),
@@ -259,7 +390,6 @@
       try {
         if (!db) throw new Error('Baza nije povezana.');
         const mapped = await parseSelectedFile();
-
         showStatus('Upload u toku...');
         for (let i = 0; i < mapped.length; i += 300) {
           const batch = db.batch();
@@ -271,7 +401,6 @@
           });
           await batch.commit();
         }
-
         showStatus('Upload završen. Artikli su dodati u bazu.');
         await loadItems();
       } catch (e) {
@@ -284,61 +413,82 @@
         if (!db) throw new Error('Baza nije povezana.');
         const snap = await db.collection(collectionName).get();
         loadedItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderResults(filterItems(searchInput.value));
-        resultInfo.textContent = 'Ukupno artikala u bazi: ' + loadedItems.length;
+        updateDashboard();
+        renderSearch(searchInput.value);
       } catch (e) {
         showStatus('Greška pri učitavanju: ' + e.message, 'err');
       }
     }
 
-    function filterItems(query) {
+    function getMatches(query) {
       const q = normalizeText(query);
       const qNoSpace = String(query || '').replace(/\s+/g, '').trim();
-      if (!q && !qNoSpace) return loadedItems;
 
-      const exactEan = loadedItems.filter(item => (item.eanNorm || '').trim() === qNoSpace && qNoSpace);
+      if (!q && !qNoSpace) return [];
+
+      const exactEan = loadedItems.filter(item => (item.eanNorm || '') === qNoSpace && qNoSpace);
       if (exactEan.length) return exactEan;
 
-      return loadedItems.filter(item => {
-        return (item.nazivNorm || '').includes(q)
-          || (item.eanNorm || '').includes(qNoSpace)
-          || (item.sifraNorm || '').includes(q);
-      });
+      return loadedItems.filter(item =>
+        (item.nazivNorm || '').includes(q) ||
+        (item.eanNorm || '').includes(qNoSpace) ||
+        (item.sifraNorm || '').includes(q)
+      );
     }
 
-    function renderResults(items) {
-      const extra = normalizeText(quickSearch.value);
-      const extraNoSpace = quickSearch.value.replace(/\s+/g, '');
-      const visible = extra || extraNoSpace
-        ? items.filter(item =>
-            (item.nazivNorm || '').includes(extra) ||
-            (item.eanNorm || '').includes(extraNoSpace) ||
-            (item.sifraNorm || '').includes(extra))
-        : items;
+    function renderSearch(query) {
+      const matches = getMatches(query);
 
-      resultsEl.innerHTML = '';
-
-      if (!visible.length) {
-        resultsEl.innerHTML = '<div class="item"><div class="name">Nema pronađenih artikala</div></div>';
-        resultInfo.textContent = 'Nema pronađenih artikala.';
+      if (!query.trim()) {
+        resultInfo.textContent = 'Spremno za pretragu ili skeniranje.';
+        mainResult.innerHTML = '<div class="empty">Ukucaj naziv, EAN ili skeniraj barkod.</div>';
+        otherResults.innerHTML = '';
         return;
       }
 
-      resultInfo.textContent = 'Prikazano artikala: ' + visible.length;
+      if (!matches.length) {
+        resultInfo.textContent = 'Nema pronađenih artikala.';
+        mainResult.innerHTML = '<div class="empty">Nema pronađenih artikala.</div>';
+        otherResults.innerHTML = '';
+        return;
+      }
 
-      visible.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <div class="name">${escapeHtml(item.naziv || '-')}</div>
-          <div class="meta">
-            <div class="pill"><small>Stanje</small><strong>${escapeHtml(item.stanje ?? '-')}</strong></div>
-            <div class="pill"><small>Zadnja nabavna s PDVom</small><strong>${escapeHtml(item.zadnjaNabavnaSPDVom ?? '-')}</strong></div>
-            <div class="pill"><small>EAN</small><strong>${escapeHtml(item.ean || '-')}</strong></div>
-            <div class="pill"><small>Šifra</small><strong>${escapeHtml(item.sifra || '-')}</strong></div>
+      const first = matches[0];
+      resultInfo.textContent = 'Pronađeno: ' + matches.length;
+
+      mainResult.innerHTML = `
+        <div class="product-name">${escapeHtml(first.naziv || '-')}</div>
+        <div class="big-grid">
+          <div class="big-tile">
+            <small>Stanje</small>
+            <strong>${escapeHtml(first.stanje ?? '-')}</strong>
           </div>
+          <div class="big-tile">
+            <small>Zadnja nabavna s PDVom</small>
+            <strong>${escapeHtml(first.zadnjaNabavnaSPDVom ?? '-')}</strong>
+          </div>
+        </div>
+        <div class="bottom-strip">
+          <div class="big-tile">
+            <small>EAN</small>
+            <strong>${escapeHtml(first.ean || '-')}</strong>
+          </div>
+          <div class="big-tile">
+            <small>Šifra</small>
+            <strong>${escapeHtml(first.sifra || '-')}</strong>
+          </div>
+        </div>
+      `;
+
+      otherResults.innerHTML = '';
+      matches.slice(1, 8).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'mini';
+        div.innerHTML = `
+          <b>${escapeHtml(item.naziv || '-')}</b>
+          <div class="small">Stanje: ${escapeHtml(item.stanje ?? '-')} | EAN: ${escapeHtml(item.ean || '-')}</div>
         `;
-        resultsEl.appendChild(div);
+        otherResults.appendChild(div);
       });
     }
 
@@ -355,10 +505,11 @@
           { fps: 10, qrbox: { width: 280, height: 120 } },
           (decodedText) => {
             searchInput.value = decodedText;
-            renderResults(filterItems(decodedText));
+            renderSearch(decodedText);
             showStatus('Barkod uspješno skeniran: ' + decodedText);
             try { navigator.vibrate?.(120); } catch {}
             stopScanner();
+            focusAndClear();
           },
           () => {}
         );
@@ -384,8 +535,14 @@
     document.getElementById('refreshBtn').addEventListener('click', loadItems);
     document.getElementById('scanBtn').addEventListener('click', startScanner);
     document.getElementById('stopScanBtn').addEventListener('click', stopScanner);
-    searchInput.addEventListener('input', e => renderResults(filterItems(e.target.value)));
-    quickSearch.addEventListener('input', () => renderResults(filterItems(searchInput.value)));
+    searchInput.addEventListener('input', e => renderSearch(e.target.value));
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const val = searchInput.value;
+        renderSearch(val);
+        focusAndClear(500);
+      }
+    });
     window.addEventListener('beforeunload', stopScanner);
 
     connectFirebase();
