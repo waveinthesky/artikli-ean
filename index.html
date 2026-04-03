@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pretraga artikala</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7a90;
+      --line: #e2e8f3;
+      --primary: #1947d1;
+      --soft: #edf3ff;
+      --danger: #d92d20;
+      --ok: #067647;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 12px; }
+    .header { margin-bottom: 12px; }
+    h1 { margin: 0; font-size: 28px; }
+    .sub { margin-top: 6px; color: var(--muted); font-size: 14px; }
+    .top-box, .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .top-box { margin-bottom: 14px; }
+    .primary-search { display: grid; gap: 10px; margin-bottom: 12px; }
+    .hero-actions, .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    input, button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      background: #fff;
+    }
+    button { cursor: pointer; font-weight: bold; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-soft { background: var(--soft); color: var(--primary); border-color: #dbe7ff; }
+    .status {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .status.ok {
+      display: block;
+      background: #ecfdf3;
+      border: 1px solid #b7ebc6;
+      color: var(--ok);
+    }
+    .status.err {
+      display: block;
+      background: #fff3f2;
+      border: 1px solid #ffd0cc;
+      color: #d92d20;
+    }
+    #reader {
+      width: 100%;
+      display: none;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px dashed #c7d3eb;
+      margin-top: 10px;
+    }
+    .results { display: grid; gap: 10px; }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+    .name { font-size: 17px; font-weight: bold; margin-bottom: 10px; }
+    .meta { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .pill {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .pill small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .toolbar { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+    .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    @media (min-width: 901px) {
+      .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Pretraga artikala</h1>
+      <div class="sub">Brzo traženje po EAN-u, nazivu ili barkodu.</div>
+    </div>
+
+    <div class="top-box">
+      <div class="primary-search">
+        <input type="text" id="searchInput" placeholder="Ukucaj EAN, naziv ili šifru" />
+      </div>
+
+      <div class="hero-actions">
+        <button id="scanBtn" class="btn-primary">Skeniraj barkod</button>
+        <button id="stopScanBtn" class="btn-soft">Stop kamera</button>
+      </div>
+
+      <div id="reader"></div>
+
+      <div style="margin-top:12px;">
+        <label style="display:block;font-size:13px;font-weight:bold;margin-bottom:8px;">Excel fajl (.xlsx, .xls, .csv)</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+      </div>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <button id="uploadBtn" class="btn-soft">Dodaj Excel u bazu</button>
+        <button id="refreshBtn" class="btn-soft">Osvježi podatke</button>
+      </div>
+
+      <div id="statusBox" class="status"></div>
+      <div class="small" style="margin-top:10px;">
+        Ova verzija <b>ne briše Firebase bazu</b>. Samo dodaje nove artikle u kolekciju <b>artikli_ean</b>.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 12px 0;">Rezultati</h2>
+      <div class="toolbar">
+        <input id="quickSearch" type="text" placeholder="Dodatno filtriranje rezultata..." />
+      </div>
+      <div id="resultInfo" class="small" style="margin-bottom:10px;">Učitavanje podataka...</div>
+      <div id="results" class="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCu-nmYw-mFQAIhhTMMqFBnjtXb_j9rO7o",
+      authDomain: "balkan-pos-system.firebaseapp.com",
+      projectId: "balkan-pos-system",
+      storageBucket: "balkan-pos-system.firebasestorage.app",
+      messagingSenderId: "1080780152624",
+      appId: "1:1080780152624:web:77fed6a3e9b18ad871b2f5"
+    };
+
+    let db = null;
+    let loadedItems = [];
+    let scanner = null;
+    let cameraRunning = false;
+    const collectionName = 'artikli_ean';
+
+    const statusBox = document.getElementById('statusBox');
+    const fileInput = document.getElementById('fileInput');
+    const searchInput = document.getElementById('searchInput');
+    const quickSearch = document.getElementById('quickSearch');
+    const resultsEl = document.getElementById('results');
+    const resultInfo = document.getElementById('resultInfo');
+    const readerEl = document.getElementById('reader');
+
+    function showStatus(message, type = 'ok') {
+      statusBox.className = 'status ' + type;
+      statusBox.textContent = message;
+    }
+
+    function normalizeText(v) {
+      return String(v ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function mapRow(row) {
+      const get = (name) => row[name] ?? '';
+      return {
+        sifra: get('Šifra'),
+        naziv: get('Naziv artikla'),
+        jm: get('JM'),
+        stanje: get('Stanje'),
+        zadnjaNabavnaSPDVom: get('Zadnja nabavna s PDVom'),
+        prodajaUPeriodu: get('Prodaja u periodu'),
+        prosjecnaDnevnaProdaja: get('Prosječna dnevna prodaja'),
+        posljednjaProdaja: get('Poslijednja prodaja'),
+        predlogDopune: get('Predlog dopune'),
+        zaPorudzbu: get('Za porudžbu'),
+        brojDanaBezRobe: get('Broj dana bez robe'),
+        pakovanje: get('Pakovanje'),
+        transPak: get('Trans. pak.'),
+        planUPeriodu: get('Plan u periodu'),
+        nabCijena: get('Nab. cijena'),
+        nabVrijednost: get('Nab. vrijednost'),
+        nefinalizovano: get('Nefinalizovano'),
+        brojRazlDobavljaca: get('Broj razl. dobavljača'),
+        ean: String(get('EAN') ?? '').trim(),
+        nazivNorm: normalizeText(get('Naziv artikla')),
+        eanNorm: String(get('EAN') ?? '').replace(/\s+/g, ''),
+        sifraNorm: normalizeText(get('Šifra'))
+      };
+    }
+
+    async function connectFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        showStatus('Baza je uspješno povezana.');
+        await loadItems();
+      } catch (e) {
+        showStatus('Greška pri povezivanju: ' + e.message, 'err');
+      }
+    }
+
+    async function parseSelectedFile() {
+      const file = fileInput.files[0];
+      if (!file) throw new Error('Izaberite Excel fajl.');
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+      if (!rows.length) throw new Error('Excel fajl nema podataka.');
+      const mapped = rows.map(mapRow).filter(x => x.naziv || x.ean || x.sifra);
+      if (!mapped.length) throw new Error('Nijedan validan red nije pronađen.');
+      return mapped;
+    }
+
+    async function uploadItems() {
+      try {
+        if (!db) throw new Error('Baza nije povezana.');
+        const mapped = await parseSelectedFile();
+
+        showStatus('Upload u toku...');
+        for (let i = 0; i < mapped.length; i += 300) {
+          const batch = db.batch();
+          const chunk = mapped.slice(i, i + 300);
+          chunk.forEach((item, index) => {
+            const safe = String(item.ean || item.sifra || item.naziv || ('row' + index)).replace(/[^a-zA-Z0-9_-]/g, '_');
+            const ref = db.collection(collectionName).doc(safe + '_' + Math.random().toString(36).slice(2, 8));
+            batch.set(ref, item);
+          });
+          await batch.commit();
+        }
+
+        showStatus('Upload završen. Artikli su dodati u bazu.');
+        await loadItems();
+      } catch (e) {
+        showStatus('Greška pri upload-u: ' + e.message, 'err');
+      }
+    }
+
+    async function loadItems() {
+      try {
+        if (!db) throw new Error('Baza nije povezana.');
+        const snap = await db.collection(collectionName).get();
+        loadedItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderResults(filterItems(searchInput.value));
+        resultInfo.textContent = 'Ukupno artikala u bazi: ' + loadedItems.length;
+      } catch (e) {
+        showStatus('Greška pri učitavanju: ' + e.message, 'err');
+      }
+    }
+
+    function filterItems(query) {
+      const q = normalizeText(query);
+      const qNoSpace = String(query || '').replace(/\s+/g, '').trim();
+      if (!q && !qNoSpace) return loadedItems;
+
+      const exactEan = loadedItems.filter(item => (item.eanNorm || '').trim() === qNoSpace && qNoSpace);
+      if (exactEan.length) return exactEan;
+
+      return loadedItems.filter(item => {
+        return (item.nazivNorm || '').includes(q)
+          || (item.eanNorm || '').includes(qNoSpace)
+          || (item.sifraNorm || '').includes(q);
+      });
+    }
+
+    function renderResults(items) {
+      const extra = normalizeText(quickSearch.value);
+      const extraNoSpace = quickSearch.value.replace(/\s+/g, '');
+      const visible = extra || extraNoSpace
+        ? items.filter(item =>
+            (item.nazivNorm || '').includes(extra) ||
+            (item.eanNorm || '').includes(extraNoSpace) ||
+            (item.sifraNorm || '').includes(extra))
+        : items;
+
+      resultsEl.innerHTML = '';
+
+      if (!visible.length) {
+        resultsEl.innerHTML = '<div class="item"><div class="name">Nema pronađenih artikala</div></div>';
+        resultInfo.textContent = 'Nema pronađenih artikala.';
+        return;
+      }
+
+      resultInfo.textContent = 'Prikazano artikala: ' + visible.length;
+
+      visible.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div class="name">${escapeHtml(item.naziv || '-')}</div>
+          <div class="meta">
+            <div class="pill"><small>Stanje</small><strong>${escapeHtml(item.stanje ?? '-')}</strong></div>
+            <div class="pill"><small>Zadnja nabavna s PDVom</small><strong>${escapeHtml(item.zadnjaNabavnaSPDVom ?? '-')}</strong></div>
+            <div class="pill"><small>EAN</small><strong>${escapeHtml(item.ean || '-')}</strong></div>
+            <div class="pill"><small>Šifra</small><strong>${escapeHtml(item.sifra || '-')}</strong></div>
+          </div>
+        `;
+        resultsEl.appendChild(div);
+      });
+    }
+
+    async function startScanner() {
+      try {
+        if (cameraRunning) return;
+        readerEl.style.display = 'block';
+        scanner = new Html5Qrcode('reader');
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras || !cameras.length) throw new Error('Kamera nije pronađena.');
+        const preferred = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[0];
+        await scanner.start(
+          preferred.id,
+          { fps: 10, qrbox: { width: 280, height: 120 } },
+          (decodedText) => {
+            searchInput.value = decodedText;
+            renderResults(filterItems(decodedText));
+            showStatus('Barkod uspješno skeniran: ' + decodedText);
+            try { navigator.vibrate?.(120); } catch {}
+            stopScanner();
+          },
+          () => {}
+        );
+        cameraRunning = true;
+      } catch (e) {
+        showStatus('Ne mogu da pokrenem kameru: ' + e.message, 'err');
+        readerEl.style.display = 'none';
+      }
+    }
+
+    async function stopScanner() {
+      try {
+        if (scanner && cameraRunning) {
+          await scanner.stop();
+          await scanner.clear();
+        }
+      } catch {}
+      cameraRunning = false;
+      readerEl.style.display = 'none';
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', uploadItems);
+    document.getElementById('refreshBtn').addEventListener('click', loadItems);
+    document.getElementById('scanBtn').addEventListener('click', startScanner);
+    document.getElementById('stopScanBtn').addEventListener('click', stopScanner);
+    searchInput.addEventListener('input', e => renderResults(filterItems(e.target.value)));
+    quickSearch.addEventListener('input', () => renderResults(filterItems(searchInput.value)));
+    window.addEventListener('beforeunload', stopScanner);
+
+    connectFirebase();
+  </script>
+</body>
+</html>
