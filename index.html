@@ -229,7 +229,23 @@
     @media (min-width: 700px) {
       .big-grid { grid-template-columns: 1fr 1fr; }
     }
-  </style>
+  
+    .glow {
+      animation: glowPulse 1s infinite alternate;
+      box-shadow: 0 0 0 0 rgba(24,73,214,.4);
+    }
+    @keyframes glowPulse {
+      from { box-shadow: 0 0 0 0 rgba(24,73,214,.3); }
+      to { box-shadow: 0 0 18px 6px rgba(24,73,214,.35); }
+    }
+
+  
+    .state-ok { color:#067647; font-weight:bold; }
+    .state-low { color:#f59e0b; font-weight:bold; }
+    .state-zero { color:#d92d20; font-weight:bold; }
+    .price-strong { font-weight:900; font-size:28px; }
+
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -313,6 +329,15 @@
     function showStatus(message, type = 'ok') {
       statusBox.className = 'status ' + type;
       statusBox.textContent = message;
+    }
+
+    
+    function getStateStyled(val){
+      const num = parseFloat(val);
+      if(isNaN(num)) return val;
+      if(num <= 0) return '<span class="state-zero">'+num+'</span>';
+      if(num <= 5) return '<span class="state-low">'+num+'</span>';
+      return '<span class="state-ok">'+num+'</span>';
     }
 
     function normalizeText(v) {
@@ -465,7 +490,7 @@
         <div class="big-grid">
           <div class="big-tile">
             <small>Stanje</small>
-            <strong>${escapeHtml(first.stanje ?? '-')}</strong>
+            <strong>${getStateStyled(first.stanje)}</strong>
           </div>
         </div>
         <div class="bottom-strip">
@@ -486,7 +511,7 @@
         div.className = 'mini';
         div.innerHTML = `
           <b>${escapeHtml(item.naziv || '-')}</b>
-          <div class="small">Stanje: ${escapeHtml(item.stanje ?? '-')} | EAN: ${escapeHtml(item.ean || '-')}</div>
+          <div class="small">Cijena: ${(parseFloat(item.zadnjaNabavnaSPDVom)||0).toFixed(3)} | Stanje: ${escapeHtml(item.stanje ?? '-')} | EAN: ${escapeHtml(item.ean || '-')}</div>
         `;
         otherResults.appendChild(div);
       });
@@ -544,6 +569,16 @@
       }
     });
     window.addEventListener('beforeunload', stopScanner);
+
+    
+    fileInput.addEventListener('change', () => {
+      const btn = document.getElementById('uploadBtn');
+      if (fileInput.files.length) {
+        btn.classList.add('glow');
+      } else {
+        btn.classList.remove('glow');
+      }
+    });
 
     connectFirebase();
   </script>
