@@ -404,6 +404,43 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
 .ab-row button{flex:none;height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
 .ab-row button:disabled{opacity:.6}
 
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:10px 2px 4px;font-size:12px;font-weight:600;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend .sw{width:12px;height:12px;border-radius:4px;display:inline-block}
+.legend .sw.our{background:var(--accent-soft);border:2px solid var(--accent)}
+.legend .sw.buy{background:var(--buy-soft);border:2px solid var(--buy)}
+.legend .sw.skip{background:var(--skip-soft);border:2px solid var(--skip)}
+.star{font-style:normal;color:#C8A200;font-size:12px;margin-left:3px}
+.t3w{margin-top:8px}
+.t3{border-collapse:separate;border-spacing:0;min-width:100%;font-size:14px}
+.t3 th{position:relative;padding:9px 8px;font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;text-align:center;white-space:nowrap;border-bottom:2px solid var(--line);background:var(--surface2);color:var(--muted)}
+.t3 th.sl{text-align:left;position:sticky;left:0;z-index:3}
+.t3 th.ours{background:var(--accent);color:var(--accent-ink);border-bottom-color:var(--accent)}
+.t3 th.mk{color:var(--ink);text-transform:none;font-size:14px;letter-spacing:0;border-left:1px solid var(--line)}
+.t3 td{padding:6px;vertical-align:top;border-bottom:1px solid var(--line);background:var(--surface)}
+.t3 tbody tr:last-child td{border-bottom:0}
+.t3 td.sl{position:sticky;left:0;z-index:2;min-width:112px;max-width:124px;box-shadow:1px 0 0 var(--line);padding:8px 8px 8px 10px}
+.t3 td.ours{background:var(--accent-soft);border-left:3px solid var(--accent);border-right:3px solid var(--accent)}
+.t3 tbody tr:last-child td.ours{border-bottom:3px solid var(--accent)}
+.t3 td.mk{border-left:1px solid var(--line)}
+.t3 .tname{display:block;width:100%;text-align:left;background:none;border:0;padding:0}
+.t3 .nm{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-weight:800;font-size:13.5px;line-height:1.2;color:var(--ink);margin-bottom:3px}
+.t3 .cd{display:block;font-size:11.5px;color:var(--muted);line-height:1.35}
+.t3 .cd b{color:var(--ink)}
+.t3 .bx{display:flex;flex-direction:column;align-items:flex-end;min-width:78px;padding:4px 7px 5px;border-radius:8px;background:var(--surface2);border:1px solid transparent}
+.t3 .bx + .bx{margin-top:4px}
+.t3 .bl{align-self:flex-start;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);line-height:1.2}
+.t3 .bv{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:18px;font-weight:600;line-height:1.05;color:var(--ink);white-space:nowrap}
+.t3 .bp{font-size:11px;font-weight:700;color:var(--muted);line-height:1.1}
+.t3 .bx.our{background:var(--surface);min-width:70px}
+.t3 .bx.our .bl{color:var(--accent)}
+.t3 .bx.buy{background:var(--buy-soft);border-color:var(--buy)}.t3 .bx.buy .bv,.t3 .bx.buy .bp,.t3 .bx.buy .bl{color:var(--buy)}
+.t3 .bx.skip{background:var(--skip-soft);border-color:var(--skip)}.t3 .bx.skip .bv,.t3 .bx.skip .bp,.t3 .bx.skip .bl{color:var(--skip)}
+.t3 .bx.dear .bp{color:var(--accent)}
+.t3 .bx.cheap .bp{color:var(--warn)}
+.t3 .bx.empty{background:transparent;border:1px dashed var(--line)}
+.t3 .bx.empty .bv{color:var(--line)}
+
 /* Toast & loader */
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .loader{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:18px}
@@ -1261,24 +1298,34 @@ function renderChecks(){
     const mks=[...new Set(list.map(c=>c.market||NOMK))].sort((a,b)=>a.localeCompare(b,'sr'));
     const G=new Map();
     list.forEach(c=>{const k=ckey(c);let x=G.get(k);if(!x){x={c,p:{},last:0,i:c.i};G.set(k,x)}const mk=c.market||NOMK;if(!x.p[mk]||c.t>x.p[mk].t)x.p[mk]=c;if(c.t>x.last){x.last=c.t;x.i=c.i}});
-    const line=(v,base,kind)=>{
-      if(!(v>0))return `<div class="ln"><span class="none">—</span></div>`;
+    const box=(lbl,v,base,kind,best)=>{
+      if(!(v>0))return `<div class="bx empty"><span class="bl">${lbl}</span><span class="bv">—</span></div>`;
       let cls='',pc='';
-      if(base>0){const d=v-base;if(kind==='wh')cls=d>0.004?' skip':d<-0.004?' buy':'';pc=`<span class="s">${esc(pctS(v,base))}</span>`}
-      return `<div class="ln${cls}"><span class="v">${esc(money(v))}</span>${pc}</div>`;
+      if(base>0){
+        const d=v-base;
+        if(kind==='wh')cls=d>0.004?' skip':d<-0.004?' buy':'';
+        else cls=d>0.004?' dear':d<-0.004?' cheap':'';
+        pc=`<span class="bp">${esc(pctS(v,base))}</span>`;
+      }
+      return `<div class="bx${cls}"><span class="bl">${lbl}${best?'<i class="star" title="najniža za nas">★</i>':''}</span><span class="bv">${esc(money(v))}</span>${pc}</div>`;
     };
     const nBuy=[...G.values()].filter(x=>{const my=myBuyNow(x.c);return Object.values(x.p).some(e=>e.wh>0&&my>0&&e.wh<my-0.004)}).length;
     html+=`<div class="sumrow"><div><b>${G.size}</b><span>${G.size===1?'artikal':'artikala'}</span></div><div class="sb"><b>${nBuy}</b><span>isplati se kupiti</span></div><div><b>${mks.length}</b><span>${mks.length===1?'market':'marketa'}</span></div></div>`;
-    if(mks.length>2)html+=`<p class="hint" style="padding:6px 2px 0">Prevuci tabelu ulijevo da vidiš ostale markete.</p>`;
-    html+=`<div class="tbl-wrap"><table class="tbl t2"><thead><tr><th class="sl">Artikal</th><th class="mi">Mi</th>${mks.map(m=>`<th class="mkh">${esc(m)}</th>`).join('')}</tr><tr class="sub"><th class="sl"></th><th class="mi"><span>nabavna</span><span>prodajna</span></th>${mks.map(()=>`<th class="mkh"><span>za nas</span><span>za kupce</span></th>`).join('')}</tr></thead><tbody>`;
+    html+=`<div class="legend"><span><i class="sw our"></i>Naše cijene</span><span><i class="sw buy"></i>Za nas jeftinije: kupiti</span><span><i class="sw skip"></i>Za nas skuplje: ne kupovati</span><span><i class="star">★</i>Najniža za nas</span></div>`;
+    if(mks.length>2)html+=`<p class="hint" style="padding:2px 2px 0">Prevuci tabelu ulijevo za ostale markete.</p>`;
+    html+=`<div class="tbl-wrap t3w"><table class="t3"><thead><tr><th class="sl">Artikal</th><th class="ours">Naše</th>${mks.map(m=>`<th class="mk">${esc(m)}</th>`).join('')}</tr></thead><tbody>`;
     [...G.values()].sort((a,b)=>b.last-a.last).forEach(x=>{
       const c=x.c,g=findGroup(c),my=myBuyNow(c),sp=g?sellOf(g):(c.sell||NaN);
-      html+=`<tr><td class="sl"><button class="tname" data-open="${x.i}"><span class="nm">${esc(c.name||c.ean||c.code)}</span><span class="cd">${esc(dateStr(x.last).slice(0,9))}</span></button></td>`;
-      html+=`<td class="mi"><div class="ln"><span class="v">${my>0?esc(money(my)):'—'}</span></div><div class="ln"><span class="v">${sp>0?esc(money(sp)):'—'}</span></div></td>`;
-      mks.forEach(mk=>{const e=x.p[mk];html+=`<td class="mkc">${e?line(e.wh,my,'wh')+line(e.rt,sp,'rt'):'<div class="ln"><span class="none">—</span></div><div class="ln"><span class="none">—</span></div>'}</td>`});
+      const qty=g&&state&&state.map.qty>=0?qtyStr(IX.data[g.latest],state.map.qty):'';
+      let bestWh=Infinity;mks.forEach(mk=>{const e=x.p[mk];if(e&&e.wh>0&&e.wh<bestWh)bestWh=e.wh});
+      const nWh=mks.filter(mk=>x.p[mk]&&x.p[mk].wh>0).length;
+      html+=`<tr><td class="sl"><button class="tname" data-open="${x.i}"><span class="nm">${esc(c.name||c.ean||c.code)}</span>${qty?`<span class="cd">Stanje <b>${esc(qty)}</b></span>`:''}<span class="cd">${esc(dateStr(x.last).slice(0,9))}</span></button></td>`;
+      html+=`<td class="ours"><div class="bx our"><span class="bl">nabavna</span><span class="bv">${my>0?esc(money(my)):'—'}</span></div><div class="bx our"><span class="bl">prodajna</span><span class="bv">${sp>0?esc(money(sp)):'—'}</span></div></td>`;
+      mks.forEach(mk=>{const e=x.p[mk];
+        html+=`<td class="mk">${e?box('za nas',e.wh,my,'wh',nWh>1&&e.wh===bestWh)+box('za kupce',e.rt,sp,'rt',false):'<div class="bx empty"><span class="bl">nije</span><span class="bv">—</span></div><div class="bx empty"><span class="bl">provjereno</span><span class="bv">—</span></div>'}</td>`});
       html+=`</tr>`;
     });
-    html+=`</tbody></table></div><p class="hint">U svakom marketu gore je cijena za nas, dole za kupce. Plavo: za nas jeftinije od naše nabavne, isplati se kupiti. Narandžasto: skuplje, ne kupovati. Procenat za kupce je prema našoj prodajnoj. Dodirni naziv artikla za detalje i istoriju po datumima.</p>`;
+    html+=`</tbody></table></div><p class="hint">„Za nas“ je cijena po kojoj market prodaje nama i poredi se sa našom nabavnom. „Za kupce“ je njihova maloprodajna i poredi se sa našom prodajnom: zeleno znači da smo mi jeftiniji, crveno da su oni jeftiniji. Dodirni naziv artikla za detalje i istoriju.</p>`;
   }else if(chkMode==='item'){
     const G=new Map();
     list.forEach(c=>{const k=ckey(c);let x=G.get(k);if(!x){x={c,rows:[],last:0};G.set(k,x)}x.rows.push(c);x.last=Math.max(x.last,c.t)});
