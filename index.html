@@ -395,6 +395,15 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
 
 @media (min-width:900px){main,.top-in{max-width:1100px}.sheet-in{max-width:760px}}
 
+.tag-label .sw{display:inline-flex;gap:4px;margin-left:4px;vertical-align:middle}
+.tag-label .sw button{border:1px solid rgba(30,26,0,.3);background:transparent;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;color:inherit}
+.tag-label .sw button.on{background:var(--tag-strip);color:var(--tag-strip-ink);border-color:var(--tag-strip)}
+.ab-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px;margin-bottom:12px}
+.ab-row span{font-size:14px;color:var(--muted);line-height:1.3}
+.ab-row b{color:var(--ink)}
+.ab-row button{flex:none;height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ab-row button:disabled{opacity:.6}
+
 /* Toast & loader */
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .loader{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:18px}
@@ -448,6 +457,7 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
   <section id="vHome" hidden>
     <div class="mk-chips" id="mkHome" role="group" aria-label="Izaberi market"></div>
     <button class="btn btn-ghost btn-block" id="btnChecks" hidden style="margin-bottom:12px"></button>
+    <div class="ab-row" id="abRow" hidden><span id="abTxt"></span><button id="abBtn">Osvježi</button></div>
     <div class="status"><span id="stFile"></span><span id="stCount"></span></div>
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -522,6 +532,7 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
     <div class="group" id="accBox" hidden>
       <h3>Nalog i baza</h3>
       <p id="accInfo" style="margin:0 0 12px;color:var(--muted);font-size:15px"></p>
+      <p id="bridgeInfo" style="margin:0 0 12px;font-size:15px"></p>
       <button class="btn btn-ghost btn-block" id="accOut" style="margin-bottom:14px">Odjavi se</button>
     </div>
     <button class="btn btn-danger btn-block" id="setWipe">Obriši sve podatke sa telefona</button>
@@ -607,12 +618,14 @@ const FIELDS=[
   {k:'buy',label:'Zadnja nabavna cijena',ex:['zadnja nabavna s pdvom','zadnja nabavna sa pdvom','zadnja nabavna'],re:/zadnja nab|posl[ij]*edn?ja nab|nabavn|ulazn|\bnc\b|\bnnc\b|purchase|cost|fakturn/},
   {k:'buyNet',label:'Nabavna bez PDV-a',opt:true,ex:['nab. cijena','nabavna cijena','nab. cijena bez pdv'],re:/nab\.?\s*cij|bez pdv/},
   {k:'sold',label:'Prodaja u periodu',ex:['prodaja u periodu','prodaja'],re:/prodaja u per|prodaj(?!n)|prodan|prodat|izlaz|realiz|\bsold\b/},
+  {k:'sold7',label:'Prodaja 7 dana',opt:true,ex:['prodaja 7 dana'],re:/prodaja 7/},
+  {k:'sold30',label:'Prodaja 30 dana',opt:true,ex:['prodaja 30 dana'],re:/prodaja 30/},
   {k:'qty',label:'Stanje',ex:['stanje'],re:/^stanje|zalih|kolic|\bqty\b|stock|lager/},
   {k:'avg',label:'Prosječna dnevna prodaja',opt:true,ex:['prosjecna dnevna prodaja'],re:/prosje?c.*prod|dnevna prod/},
   {k:'lastSale',label:'Posljednja prodaja',opt:true,ex:['poslijednja prodaja','posljednja prodaja','zadnja prodaja'],re:/posl[ij]*edn?ja prod|zadnja prod|last sale/},
   {k:'supplier',label:'Dobavljač',opt:true,ex:['dobavljac','naziv dobavljaca'],re:/^dobavljac|naziv dobavlj|supplier|vendor|komitent/},
   {k:'sell',label:'Prodajna cijena',opt:true,ex:['prodajna cijena','mpc'],re:/prodajn|\bmpc\b|\bvpc\b|maloprod|veleprod|retail/},
-  {k:'date',label:'Datum nabavke',opt:true,ex:['datum nabavke'],re:/datum nab|datum ulaz|datum/}
+  {k:'date',label:'Datum nabavke',opt:true,ex:['datum nabavke','zadnji ulaz'],re:/datum nab|datum ulaz|datum/}
 ];
 
 let state=null;            // {fileName,loadedAt,sheetName,aoa,headerRow,map}
@@ -647,7 +660,7 @@ function saveLS(){
 
 function chkId(c){const san=v=>String(v==null?'':v).replace(/[^A-Za-z0-9_-]/g,'');return `${c.t}_${san(c.market)}_${san(c.code||c.ean)}`.slice(0,140)||String(c.t)}
 function migrateCheck(c){if(c&&c.wh==null&&c.rt==null&&c.their!=null){c.wh=c.their;delete c.their}if(c&&!c.id)c.id=chkId(c);return c}
-const cloud={on:false,putCheck(){},delCheck(){},putMany(){},clearChecks(){},putSettings(){},putState(){},putPrices(){}};
+const cloud={on:false,requestRefresh(){},putCheck(){},delCheck(){},putMany(){},clearChecks(){},putSettings(){},putState(){},putPrices(){}};
 /* ---------- value helpers ---------- */
 function normKey(v){
   if(v==null||v instanceof Date)return'';
@@ -818,6 +831,7 @@ function supOf(g){
   return e&&e.n===nameKey(g.name)?e.s:'';
 }
 function sellOf(g){
+  if(state&&state.map&&state.map.sell>=0&&g&&IX.data[g.latest]){const v=num(IX.data[g.latest][state.map.sell]);if(v>0)return v}
   if(!g||!g.code)return NaN;
   const e=PR.map.get(normKey(g.code));
   if(!e||e.n!==nameKey(g.name)||!(e.p>0))return NaN;
@@ -945,9 +959,29 @@ function itemHTML(g,extra){
   const sub=[m.qty>=0?('Stanje '+qtyStr(r,m.qty)):'',g.code?('Šifra '+g.code):'',sup].filter(Boolean).join(', ')||g.bars[0]||'';
   return `<li><button class="item" data-g="${g.i}"><span class="nm">${esc(g.name||g.bars[0]||g.code)}</span><span class="sub">${esc(extra||sub)}</span><span class="pr">${esc(money(priceOf(g)))}<small>${(()=>{const s=sellOf(g);return isFinite(s)?'prodajna '+esc(money(s)):'nabavna'})()}</small></span></button></li>`;
 }
+let bridge=null,refreshAt=0,refreshTimer=0;
+function agoTxt(t){if(!t)return'nikad';const m=Math.round((Date.now()-t)/60000);if(m<1)return'upravo';if(m<60)return`prije ${m} min`;const h=Math.round(m/60);if(h<24)return`prije ${h} h`;return dateStr(t)}
+function renderBridgeInfo(){
+  const el=$('#bridgeInfo');if(!el)return;
+  if(!bridge){el.textContent='Veza sa Abakusom (most) još nije pokrenuta.';el.style.color='var(--muted)';return}
+  const ok=bridge.lastSeen&&Date.now()-bridge.lastSeen<5*60000;
+  el.innerHTML=`Veza sa Abakusom: <b>${ok?'radi':'ne javlja se'}</b> (zadnji kontakt ${esc(agoTxt(bridge.lastSeen))}). Zadnje osvježavanje: ${esc(agoTxt(bridge.lastSync))}, ${esc(String(bridge.rows||0))} artikala, ${esc(bridge.objekat||'')}.${bridge.error?`<br>Greška: ${esc(bridge.error)}`:''}`;
+  el.style.color=ok?'var(--accent)':'var(--warn)';
+}
+function renderAbRow(){
+  const row=$('#abRow');if(!row)return;
+  const isAb=state&&state.source==='abakus'&&cloud.on;
+  row.hidden=!isAb;if(!isAb)return;
+  const t=new Date(state.loadedAt);
+  let txt=`<b>Uživo iz Abakusa</b><br>Podaci od ${pad(t.getHours())}:${pad(t.getMinutes())}${dayStart(state.loadedAt)!==dayStart(Date.now())?', '+dateStr(state.loadedAt).slice(0,9):''}`;
+  if(bridge&&bridge.lastSeen&&Date.now()-bridge.lastSeen>5*60000)txt+=`<br><span style="color:var(--warn)">Računar sa Abakusom se ne javlja ${agoTxt(bridge.lastSeen)}</span>`;
+  if(refreshAt)txt+=`<br><span style="color:var(--accent)">Tražim nove podatke…</span>`;
+  $('#abTxt').innerHTML=txt;$('#abBtn').disabled=!!refreshAt;
+}
 function renderHome(){
   if(!state)return;
   $('#stFile').innerHTML=`<b>${esc(state.fileName)}</b>`;
+  renderAbRow();
   $('#stCount').textContent=`${IX.groups.length.toLocaleString('bs-BA')} artikala`;
   renderMarketChips('#mkHome');
   const bc=$('#btnChecks');bc.hidden=!checks.length;const nA=new Set(checks.map(ckey)).size;bc.textContent=`Pregled skeniranih artikala i cijena (${nA})`;$('#fabListN').textContent=nA?`${nA} ${nA===1?'artikal':'artikala'}`:'prazno';$('#btnList').hidden=!checks.length;
@@ -1032,7 +1066,11 @@ function openItem(g,scanned){
   html+=`<div class="tag-main"><div class="tag-label">${buyLabel}</div><div class="tag-val">${moneyHTML(buy)}</div></div>`;
   html+=`<div class="tag-main sell"><div class="tag-label">Naša prodajna</div><div class="tag-val">${moneyHTML(sell)}</div></div>`;
   html+=`<div class="tag-cell"><div class="tag-label">Stanje</div><div class="tag-val">${esc(qtyStr(row,m.qty))}</div></div>`;
-  html+=`<div class="tag-cell"><div class="tag-label">Prodaja u periodu</div><div class="tag-val">${esc(qtyStr(row,m.sold))}</div></div>`;
+  if(m.sold7>=0||m.sold30>=0){
+    const w=settings.soldWin==='7'&&m.sold7>=0?'7':(m.sold30>=0?'30':'7');
+    const col=w==='7'?m.sold7:m.sold30;
+    html+=`<div class="tag-cell"><div class="tag-label">Prodato <span class="sw">${m.sold7>=0?`<button data-act="soldwin" data-w="7" class="${w==='7'?'on':''}">7 dana</button>`:''}${m.sold30>=0?`<button data-act="soldwin" data-w="30" class="${w==='30'?'on':''}">30 dana</button>`:''}</span></div><div class="tag-val">${esc(qtyStr(row,col))}</div></div>`;
+  }else html+=`<div class="tag-cell"><div class="tag-label">Prodaja u periodu</div><div class="tag-val">${esc(qtyStr(row,m.sold))}</div></div>`;
   html+=`</div></div>`;
 
   let f='';
@@ -1380,6 +1418,7 @@ $('#sheet').addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');if(!a)return;
   if(a.dataset.act==='close')closeSheet();
   if(a.dataset.act==='savecheck'){saveCheck();return}
+  if(a.dataset.act==='soldwin'){settings.soldWin=a.dataset.w;saveLS();if(curItem){const st=$('#sheet').scrollTop;openItem(curItem.g);$('#sheet').scrollTop=st}return}
   if(a.dataset.act==='scan'){closeSheet();openScanner()}
   if(a.dataset.act==='search'){closeSheet();$('#q').value='';renderResults();$('#q').focus()}
 });
@@ -1628,6 +1667,7 @@ function renderSettings(){
   if(PR.fileName){const st=priceStats();$('#priceInfo').textContent=`Prodajne cijene: ${PR.fileName}, ${st.ok.toLocaleString('bs-BA')} artikala povezano po šifri i nazivu, ${st.sup.toLocaleString('bs-BA')} sa dobavljačem${st.bad?`, ${st.bad} preskočeno zbog drugačijeg naziva`:''}.`}
   else $('#priceInfo').textContent='Prodajne cijene nisu učitane.';
   renderMkList();
+  renderBridgeInfo();
   const lb=settings.lastBackup;$('#bkInfo').textContent=lb?`Zadnja kopija: ${dateStr(lb)}`:'Kopija još nije pravljena.';$('#bkInfo').style.color=!lb||Date.now()-lb>7*864e5?'var(--warn)':'var(--accent)';
 }
 $('#setCur').addEventListener('input',e=>{settings.currency=e.target.value.trim();saveLS()});
@@ -1686,6 +1726,7 @@ $('#bkLoad').addEventListener('change',async e=>{
   }catch(err){toast('Ovo nije ispravna rezervna kopija.')}
 });
 $('#btnSettings').onclick=()=>go('set');
+$('#abBtn').onclick=()=>cloud.requestRefresh();
 $('#btnList').onclick=()=>go('checks');
 $('#fabList').onclick=()=>go('checks');
 $('#btnBack').onclick=()=>{if(view==='map'){draft=null}go(state?'home':'empty')};
@@ -1754,7 +1795,7 @@ if(ONLINE){
     loading(true,'Učitavam artikle iz baze…');
     try{
       const o=await getChunks('state',m.chunks);
-      state={fileName:m.fileName,loadedAt:m.loadedAt,sheetName:m.sheetName||'',aoa:o.aoa,headerRow:m.headerRow||0,map:Object.assign({},m.map)};
+      state={fileName:m.fileName,loadedAt:m.loadedAt,sheetName:m.sheetName||'',aoa:o.aoa,headerRow:m.headerRow||0,map:m.map?Object.assign({},m.map):autoMap(headersOf(o.aoa,m.headerRow||0)),source:m.source||''};
       FIELDS.forEach(F=>{if(state.map[F.k]===undefined)state.map[F.k]=-1});
       IX=buildIndex(state.aoa,state.headerRow,state.map);
       try{await idb.set('state',state)}catch(e){}
@@ -1785,6 +1826,11 @@ if(ONLINE){
       if(!m.state){loading(false);if(state&&!snap.metadata.fromCache)cloud.putState(state);else if(!state)go('empty')}
       if(!m.prices&&PR.fileName&&!snap.metadata.fromCache)cloud.putPrices({fileName:PR.fileName,loadedAt:PR.loadedAt||Date.now(),rows:[...PR.map.entries()].map(([c,e])=>[c,e.n,e.p,e.s])});
     },syncErr));
+    unsub.push(D.doc('bridge').onSnapshot(snap=>{
+      bridge=snap.data()||null;
+      if(refreshAt&&bridge&&(bridge.refreshDone||0)>=refreshAt){refreshAt=0;clearTimeout(refreshTimer);toast('Podaci iz Abakusa su osvježeni');}
+      if(view==='home')renderAbRow();if(view==='set')renderBridgeInfo();
+    },()=>{}));
     unsub.push(D.doc('settings').onSnapshot(snap=>{
       const d=snap.data();
       if(d&&Array.isArray(d.markets)){settings.markets=d.markets;saveLS();if(view==='home')renderMarketChips('#mkHome');if(view==='set')renderMkList()}
@@ -1828,6 +1874,12 @@ if(ONLINE){
   });
   document.addEventListener('keydown',e=>{if($('#login').hidden)return;if(/^\d$/.test(e.key)){pin+=e.key;drawPin();if(pinLen()&&pin.length===pinLen())tryPin()}else if(e.key==='Backspace'){pin=pin.slice(0,-1);drawPin()}else if(e.key==='Enter')tryPin()});
   drawPin();
+  cloud.requestRefresh=()=>{
+    refreshAt=Date.now();renderAbRow();
+    D.doc('refresh').set({at:refreshAt}).catch(syncErr);
+    clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(()=>{if(refreshAt){refreshAt=0;renderAbRow();toast('Računar sa Abakusom ne odgovara. Provjeri da li je upaljen i ima internet.',5000)}},120000);
+  };
   $('#accOut').onclick=async()=>{if(!confirm('Odjaviti se sa ovog uređaja?'))return;await auth.signOut()};
   startOnline=()=>{
     $('#accBox').hidden=false;
