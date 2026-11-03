@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#EDF1EA">
 <title>Skener cijena</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -441,6 +442,28 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
 .t3 .bx.empty{background:transparent;border:1px dashed var(--line)}
 .t3 .bx.empty .bv{color:var(--line)}
 
+.about{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px 20px 22px;margin-top:6px;line-height:1.6}
+.about h2{font-size:19px;margin:22px 0 8px;color:var(--accent);letter-spacing:.01em}
+.about p{margin:0 0 12px;color:var(--ink);font-size:16.5px}
+.ab-bism{font-family:"Amiri","Scheherazade New","Noto Naskh Arabic","Traditional Arabic","Arabic Typesetting",serif;font-size:clamp(30px,9vw,42px);line-height:1.6;text-align:center;color:var(--accent);margin-top:4px}
+.ab-dua{font-family:"Amiri","Scheherazade New","Noto Naskh Arabic","Traditional Arabic",serif;font-size:clamp(21px,6vw,26px);line-height:1.9;text-align:center;color:var(--accent);background:var(--accent-soft);border-radius:14px;padding:10px 12px;margin:6px 0 8px}
+.ab-tr{text-align:center;font-style:italic;color:var(--muted)!important;font-size:15.5px!important}
+.ab-orn{display:flex;align-items:center;gap:12px;color:var(--tag-strip);opacity:.55;margin:14px 0 4px;font-size:14px}
+.ab-orn span{flex:1;height:1px;background:currentColor}
+.ab-em{font-weight:700;color:var(--accent)!important;text-align:center;font-size:18px!important}
+.ab-list{margin:0 0 12px;padding:0;list-style:none;display:grid;gap:10px}
+.ab-list li{position:relative;padding:10px 12px 10px 34px;background:var(--surface2);border-radius:12px;font-size:15.5px;line-height:1.5}
+.ab-list li::before{content:"✦";position:absolute;left:12px;top:10px;color:var(--accent);font-size:13px}
+.ab-amin{text-align:center;font-weight:800;font-size:20px!important;color:var(--accent)!important;margin-top:4px!important}
+.ab-foot{text-align:center;color:var(--muted)!important;font-size:13px!important;margin:18px 0 0!important}
+.ab-open{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--accent-soft);border:1px solid var(--accent);border-radius:16px;padding:12px 14px;margin:0 0 16px}
+.ab-open .ab-ic{flex:none;width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:16px}
+.ab-open b{display:block;font-size:17px;color:var(--ink)}
+.ab-open small{display:block;font-size:13px;color:var(--muted)}
+.ab-open .ab-ar{margin-left:auto;font-size:26px;color:var(--accent)}
+.ab-link{text-align:center;margin:22px 0 0}
+.ab-link button{background:none;border:0;color:var(--muted);font-weight:600;font-size:14px;padding:8px 12px}
+
 /* Toast & loader */
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .loader{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:18px}
@@ -502,6 +525,7 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
       <button class="clear" id="qClear" aria-label="Obriši pretragu" hidden>×</button>
     </div>
     <div id="results"></div>
+    <p class="ab-link"><button id="btnAbout2">✦ O programu</button></p>
   </section>
 
   <!-- Saved price checks -->
@@ -531,8 +555,41 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
   </section>
 
   <!-- Settings -->
+  <!-- About -->
+  <section id="vAbout" hidden>
+    <article class="about">
+      <div class="ab-bism" lang="ar" dir="rtl">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+      <p class="ab-tr">U ime Allaha, Milostivog, Samilosnog</p>
+      <div class="ab-orn" aria-hidden="true"><span></span>✦<span></span></div>
+
+      <h2>Zahvala</h2>
+      <p>Sva hvala pripada Allahu, Gospodaru svjetova, na svakoj blagodati kojom nas obasipa: na zdravlju i snazi, na poslu kojim se bavimo, na ljudima s kojima radimo i na nafaki koju nam iz dana u dan daje. Ništa od ovoga ne bi bilo moguće bez Njegove pomoći i Njegove volje.</p>
+      <p class="ab-em">Elhamdulillah.</p>
+
+      <h2>Čemu služi ovaj program</h2>
+      <p>Skener cijena je nastao iz želje da naš posao bude uredniji, pošteniji i lakši, i da odluke donosimo na osnovu tačnih podataka, a ne napamet.</p>
+      <ul class="ab-list">
+        <li><b>Jednim skeniranjem</b> vidimo stanje artikla, po kojoj cijeni smo ga nabavili, po kojoj ga prodajemo i od koga ga uzimamo.</li>
+        <li><b>Podaci stižu iz Abakusa,</b> pa uvijek radimo sa onim što je stvarno na polici, bez prepisivanja i bez grešaka.</li>
+        <li><b>Kad obilazimo druge markete,</b> bilježimo njihove cijene i odmah vidimo gdje se robu isplati kupiti, a gdje ne.</li>
+        <li><b>Pregled i istorija cijena</b> pomažu nam da robu nabavljamo pametno, da ne propustimo dobru priliku i da kupcima ponudimo pravednu cijenu.</li>
+      </ul>
+      <p>Neka sve to bude u službi halal zarade: da nikome ne učinimo nepravdu, da se trud svakog čovjeka u firmi vidi i cijeni, i da od našeg rada imaju koristi i naše porodice i naši kupci.</p>
+
+      <div class="ab-orn" aria-hidden="true"><span></span>✦<span></span></div>
+      <h2>Dova</h2>
+      <p>Molimo Uzvišenog Allaha da nam pomogne u svakom poslu koji započnemo, da nam olakša svaki korak, da nam poveća nafaku i podari bereket u poslovanju. Neka naš rad učini iskrenim i korisnim, neka nas sačuva od svakog haram zalogaja i neka nam ono što zaradimo bude na dobro i na ovom i na budućem svijetu.</p>
+      <div class="ab-dua" lang="ar" dir="rtl">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ</div>
+      <p class="ab-tr">„Gospodaru naš, podaj nam dobro i na ovom svijetu i na onom svijetu, i sačuvaj nas kazne u Vatri.“ (El-Bekare, 201)</p>
+      <p class="ab-amin">Amin.</p>
+
+      <p class="ab-foot">Skener cijena, Balkan doo</p>
+    </article>
+  </section>
+
   <section id="vSet" class="panel" hidden>
     <h2>Podešavanja</h2>
+    <button class="ab-open" id="btnAbout"><span class="ab-ic">✦</span><span><b>O programu</b><small>Bismillah, zahvala i čemu služi ovaj program</small></span><span class="ab-ar">›</span></button>
     <p id="setInfo"></p>
     <div class="group">
       <h3>Podaci</h3>
@@ -830,11 +887,11 @@ function toast(msg,ms=2400){const t=$('#toast');t.textContent=msg;t.hidden=false
 function loading(on,txt){$('#loader').hidden=!on;if(txt)$('#loaderText').textContent=txt}
 function go(v){
   view=v;
-  $('#vChecks').hidden=v!=='checks';$('#vEmpty').hidden=v!=='empty';$('#vHome').hidden=v!=='home';$('#vMap').hidden=v!=='map';$('#vSet').hidden=v!=='set';
+  $('#vChecks').hidden=v!=='checks';$('#vAbout').hidden=v!=='about';$('#vEmpty').hidden=v!=='empty';$('#vHome').hidden=v!=='home';$('#vMap').hidden=v!=='map';$('#vSet').hidden=v!=='set';
   $('#fabWrap').hidden=v!=='home';
   $('#btnSettings').hidden=!(v==='home');
   $('#btnList').hidden=!(v==='home'&&checks.length);
-  $('#btnBack').hidden=!(v==='set'||v==='map'||v==='checks');
+  $('#btnBack').hidden=!(v==='set'||v==='map'||v==='checks'||v==='about');
   window.scrollTo(0,0);
   if(v==='home')renderHome();
   if(v==='set')renderSettings();
@@ -1776,7 +1833,9 @@ $('#btnSettings').onclick=()=>go('set');
 $('#abBtn').onclick=()=>cloud.requestRefresh();
 $('#btnList').onclick=()=>go('checks');
 $('#fabList').onclick=()=>go('checks');
-$('#btnBack').onclick=()=>{if(view==='map'){draft=null}go(state?'home':'empty')};
+$('#btnBack').onclick=()=>{if(view==='map'){draft=null}if(view==='about'){go('set');return}go(state?'home':'empty')};
+$('#btnAbout').onclick=()=>go('about');
+$('#btnAbout2').onclick=()=>go('about');
 
 /* ---------- keep screen on while in the store ---------- */
 let wakeLock=null;
@@ -1798,7 +1857,7 @@ if(window.AndroidBridge){DL={save:async({filename,data})=>{
 window.__back=function(){
   if(!$('#scan').hidden){closeScanner();return true}
   if(!$('#sheet').hidden){closeSheet();return true}
-  if(view==='set'||view==='map'||view==='checks'){$('#btnBack').click();return true}
+  if(view==='set'||view==='map'||view==='checks'||view==='about'){$('#btnBack').click();return true}
   return false;
 };
 
