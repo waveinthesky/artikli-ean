@@ -502,10 +502,19 @@ small.buy{color:var(--buy)}small.skip{color:var(--skip)}
 .sims{display:grid;gap:8px}
 .sim{display:block;width:100%;box-sizing:border-box;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .sim.best{border:2px solid var(--buy);background:var(--buy-soft)}
-.sim-n{display:block;font-weight:800;font-size:15px;line-height:1.25;color:var(--ink)}
+.sim-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sim-n{display:block;font-weight:800;font-size:15px;line-height:1.25;color:var(--ink);min-width:0}
+.sim-sup{flex:none;max-width:46%;text-align:right;font-size:11.5px;font-weight:800;line-height:1.25;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 7px;overflow-wrap:anywhere}
+.sim-m em{font-style:normal;font-size:11px;font-weight:800;color:#fff;background:var(--buy);border-radius:999px;padding:1px 7px;margin-right:6px}
+.nab-hrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 2px 8px}
+.nab-hrow .nab-h{margin:0}
+.chip-btn{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-weight:700;font-size:13px}
+.nab-vat{margin:-2px 2px 8px;font-size:12.5px;color:var(--muted)}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.of-tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .sim-n em{font-style:normal;font-size:11px;font-weight:800;color:#fff;background:var(--buy);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:2px}
 .sim-m{display:block;font-size:12.5px;color:var(--muted);margin:2px 0 6px}
-.sim-p{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sim-p{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .sim-p > span{display:flex;flex-direction:column;background:var(--surface2);border-radius:8px;padding:4px 7px}
 .sim.best .sim-p > span{background:rgba(255,255,255,.6)}
 .sim-p small{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
@@ -1259,7 +1268,7 @@ function openItem(g,scanned){
   const buyNet=m.buyNet>=0?num(row[m.buyNet]):NaN;
   const sup=supOf(g);
   const date=m.date>=0?toDate(row[m.date]):null;
-  const buyLabel='Zadnja nabavna';
+  const buyLabel='Nabavna s PDV';
   const shownBar=scanned&&g.bars.includes(normKey(scanned))?normKey(scanned):(g.bars[0]||'');
 
   let html=sheetBar(true);
@@ -2029,9 +2038,10 @@ function lev1(a,b){ // da li je razlika najviše jedno slovo
   return d+(a.length-i)+(b.length-j)<=1;
 }
 function tokMatch(q,t){if(q===t)return 1;if(q.length>=4&&t.length>=4&&(t.startsWith(q)||q.startsWith(t)))return .85;if(q.length>=5&&lev1(q,t))return .7;return 0}
-function findSimilar(query,exclude){
+function findSimilar(query,exclude,size){
   nabIndex();
   const qp=typeof query==='string'?parseQuery(query):query;
+  if(size&&size.qty){qp.qty=size.qty;qp.kind=size.kind}
   if(!qp.tokens.length)return{qp,list:[]};
   const W=qp.tokens.map(tokW),Wsum=W.reduce((a,b)=>a+b,0)||1;
   const list=[];
@@ -2065,9 +2075,9 @@ const hDate=d=>d&&d.length===8?`${d.slice(6)}.${d.slice(4,6)}.${d.slice(2,4)}.`:
 function simRow(x,bestUP){
   const i=nabInfo(x.g),up=unitPrice(i.buy,i.p),mg=i.buy>0&&i.sell>0?(i.sell-i.buy)/i.buy*100:NaN;
   const best=isFinite(up)&&up===bestUP;
-  const meta=[i.sup,i.p.qty&&!i.p.perKg?fmtSize(i.p.qty,i.p.kind):'',isFinite(i.qty)?`stanje ${i.qty.toLocaleString('bs-BA',{maximumFractionDigits:3})}${i.unit?' '+i.unit:''}`:'',isFinite(i.s30)?`prodato 30d ${i.s30.toLocaleString('bs-BA',{maximumFractionDigits:2})}`:''].filter(Boolean);
-  return `<button class="sim${best?' best':''}" data-g="${x.g.i}"><span class="sim-n">${esc(i.name)}${best?'<em>najjeftinije po '+(i.p.kind==='v'?'L':'kg')+'</em>':''}</span><span class="sim-m">${esc(meta.join(' · '))}</span>
-    <span class="sim-p"><span><small>nabavna</small><b>${i.buy>0?esc(money(i.buy)):'—'}</b></span><span><small>${i.p.kind==='v'?'po L':'po kg'}</small><b>${isFinite(up)?esc(money(up)):'—'}</b></span><span><small>prodajna</small><b>${i.sell>0?esc(money(i.sell)):'—'}</b></span><span><small>marža</small><b class="${mg<settings.nab.minMargin?'lo':''}">${isFinite(mg)?esc(mg.toLocaleString('bs-BA',{maximumFractionDigits:0}))+' %':'—'}</b></span></span></button>`;
+  const meta=[i.p.qty&&!i.p.perKg?fmtSize(i.p.qty,i.p.kind):(i.p.perKg?'na '+(i.p.kind==='v'?'litar':'kg'):''),isFinite(i.qty)?`stanje ${i.qty.toLocaleString('bs-BA',{maximumFractionDigits:3})}${i.unit?' '+i.unit:''}`:'',isFinite(i.s30)?`prodato 30 dana: ${i.s30.toLocaleString('bs-BA',{maximumFractionDigits:2})}`:''].filter(Boolean);
+  return `<button class="sim${best?' best':''}" data-g="${x.g.i}"><span class="sim-top"><span class="sim-n">${esc(i.name)}</span><span class="sim-sup">${esc(i.sup||'bez dobavljača')}</span></span><span class="sim-m">${best?'<em>najjeftinija nabavna</em>':''}${esc(meta.join(' · '))}</span>
+    <span class="sim-p"><span><small>nabavna</small><b>${i.buy>0?esc(money(i.buy)):'—'}</b></span><span><small>prodajna</small><b>${i.sell>0?esc(money(i.sell)):'—'}</b></span><span><small>marža</small><b class="${mg<settings.nab.minMargin?'lo':''}">${isFinite(mg)?esc(mg.toLocaleString('bs-BA',{maximumFractionDigits:0}))+' %':'—'}</b></span></span></button>`;
 }
 function histTableHTML(code,curBuy){
   const h=histOf(code);
@@ -2086,43 +2096,42 @@ function histTableHTML(code,curBuy){
 function median(a){a=a.filter(isFinite).sort((x,y)=>x-y);if(!a.length)return NaN;const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2}
 function roundShelf(p){if(!(p>0))return NaN;if(p<1)return Math.max(.05,Math.round(p*20)/20-0.01);return Math.ceil(p*10)/10-0.01}
 function offerEval(price,sizeTxt,sim){
-  const sp=sizeTxt?parseQuery('x '+sizeTxt):{qty:null,kind:null};
-  const qp=sim.qp;
-  let qty=sp.qty||qp.qty,kind=sp.kind||qp.kind;
-  const items=sim.list.slice(0,25).map(x=>nabInfo(x.g));
-  if(qty&&!kind){const ks=items.filter(i=>i.p.kind).map(i=>i.p.kind);kind=ks.filter(k=>k==='v').length>ks.length/2?'v':'m'}
-  const comp=items.filter(i=>i.buy>0&&i.p.qty&&(!kind||i.p.kind===kind));
-  const ups=comp.map(i=>unitPrice(i.buy,i.p));
-  const up=qty?price/(qty/1000):NaN;
-  const r={price,qty,kind,up,n:comp.length,min:NaN,med:NaN,minI:null,verdict:'',cls:''};
-  if(isFinite(up)&&comp.length){
-    r.min=Math.min(...ups);r.med=median(ups);r.minI=comp[ups.indexOf(r.min)];
-    if(up<r.min-0.001){r.cls='buy';r.verdict='Odlična ponuda: jeftinije od svega što imamo'}
-    else if(up<r.med-0.001){r.cls='buy2';r.verdict='Dobra ponuda: jeftinije od prosjeka sličnih'}
-    else if(up<=r.med+0.001){r.cls='eq';r.verdict='Prosječna ponuda'}
+  const T=nabTarget();
+  const qty=T?T.qty:null;
+  const pool=(sim.near&&T?sim.near:sim.list.slice(0,25)).map(x=>nabInfo(x.g));
+  let kind=T&&T.kind;
+  if(qty&&!kind){const ks=pool.filter(i=>i.p.kind).map(i=>i.p.kind);kind=ks.filter(k=>k==='v').length>ks.length/2?'v':'m'}
+  const comp=pool.filter(i=>i.buy>0&&i.p.qty&&!i.p.perKg&&(!kind||i.p.kind===kind));
+  const same=comp.map(i=>i.buy*qty/i.p.qty);           // njihova nabavna preračunata na ponuđeno pakovanje
+  const r={price,qty,kind,n:comp.length,min:NaN,med:NaN,minI:null,verdict:'',cls:''};
+  if(qty&&comp.length){
+    r.min=Math.min(...same);r.med=median(same);r.minI=comp[same.indexOf(r.min)];
+    if(price<r.min-0.001){r.cls='buy';r.verdict='Odlična ponuda: jeftinije od svega što imamo'}
+    else if(price<r.med*0.98){r.cls='buy2';r.verdict='Dobra ponuda: jeftinije od prosjeka sličnih'}
+    else if(price<=r.med*1.02){r.cls='eq';r.verdict='Prosječna ponuda: otprilike kao prosjek sličnih'}
     else{r.cls='skip';r.verdict='Lošija ponuda: skuplje od prosjeka sličnih'}
   }
-  const ratios=items.filter(i=>i.buy>0&&i.sell>0).map(i=>i.sell/i.buy).filter(x=>x>1&&x<3);
+  const ratios=pool.filter(i=>i.buy>0&&i.sell>0).map(i=>i.sell/i.buy).filter(x=>x>1&&x<3);
   r.ratio=median(ratios);
-  const sellUps=items.filter(i=>i.sell>0&&i.p.qty&&(!kind||i.p.kind===kind)).map(i=>unitPrice(i.sell,i.p));
-  r.sellUp=median(sellUps);
+  const sellSame=pool.filter(i=>i.sell>0&&i.p.qty&&!i.p.perKg&&(!kind||i.p.kind===kind)).map(i=>i.sell*qty/i.p.qty);
+  r.sellMed=qty?median(sellSame):NaN;
   r.sugg=isFinite(r.ratio)?roundShelf(price*r.ratio):NaN;
-  r.suggUp=isFinite(r.sellUp)&&qty?roundShelf(r.sellUp*qty/1000):NaN;
-  const withStock=items.filter(i=>i.qty>0);
-  r.sold30=items.reduce((a,i)=>a+(isFinite(i.s30)?i.s30:0),0);
-  r.dead=withStock.filter(i=>!(i.s30>0)).length;r.nItems=items.length;
+  r.suggUp=isFinite(r.sellMed)?roundShelf(r.sellMed):NaN;
+  r.sold30=pool.reduce((a,i)=>a+(isFinite(i.s30)?i.s30:0),0);
+  r.dead=pool.filter(i=>i.qty>0&&!(i.s30>0)).length;r.nItems=pool.length;
   return r;
 }
 function offerHTML(r){
   let h=`<div class="of ${r.cls}">`;
-  if(isFinite(r.up))h+=`<div class="of-top"><span>Ponuda <b>${esc(money(r.price))}</b> za ${esc(fmtSize(r.qty,r.kind))}</span><span class="of-up">${esc(money(r.up))}${perUnitLbl(r.kind)}</span></div>`;
-  else h+=`<div class="of-top"><span>Ponuda <b>${esc(money(r.price))}</b></span><span class="hint" style="padding:0">Upiši pakovanje (npr. 200 g) za poređenje po kg/L.</span></div>`;
-  if(r.verdict){
-    h+=`<div class="of-v"><span class="ico">${r.cls==='skip'?ICO_NO:ICO_CART}</span><div><strong>${esc(r.verdict)}</strong><p>Prosjek ${r.n} sličnih: ${esc(money(r.med))}${perUnitLbl(r.kind)} (${esc(pctS(r.up,r.med))}). Najjeftinije imamo ${esc(r.minI.name)}, ${esc(r.minI.sup||'')}: ${esc(money(r.min))}${perUnitLbl(r.kind)}.</p></div></div>`;
-  }else if(isFinite(r.up))h+=`<p class="hint">Nema sličnih artikala sa poznatim pakovanjem i nabavnom za poređenje.</p>`;
+  h+=`<div class="of-top"><span>Ponuda <b>${esc(money(r.price))}</b>${r.qty?` za ${esc(fmtSize(r.qty,r.kind||'m'))}`:''}</span><span class="of-tag">nabavna s PDV</span></div>`;
+  if(!r.qty)h+=`<p class="hint">Upiši pakovanje (npr. 200 g) da uporedim sa sličnim artiklima.</p>`;
+  else if(r.verdict){
+    const sz=esc(fmtSize(r.qty,r.kind||'m'));
+    h+=`<div class="of-v"><span class="ico">${r.cls==='skip'?ICO_NO:ICO_CART}</span><div><strong>${esc(r.verdict)}</strong><p>Naših ${r.n} sličnih, preračunato na ${sz}: prosjek <b>${esc(money(r.med))}</b> (ponuda ${esc(pctS(r.price,r.med))}). Najjeftiniji je ${esc(r.minI.name)}, ${esc(r.minI.sup||'bez dobavljača')}: <b>${esc(money(r.min))}</b>.</p></div></div>`;
+  }else h+=`<p class="hint">Nema sličnih artikala u tom pakovanju sa poznatom nabavnom za poređenje.</p>`;
   const sg=[];
   if(isFinite(r.sugg))sg.push(`po našoj uobičajenoj marži za slične (${esc(((r.ratio-1)*100).toLocaleString('bs-BA',{maximumFractionDigits:0}))} %): <b>${esc(money(r.sugg))}</b>`);
-  if(isFinite(r.suggUp))sg.push(`po cijeni po ${r.kind==='v'?'L':'kg'} po kojoj prodajemo slične: <b>${esc(money(r.suggUp))}</b>`);
+  if(isFinite(r.suggUp))sg.push(`po cijeni po kojoj prodajemo slično pakovanje: <b>${esc(money(r.suggUp))}</b>`);
   if(sg.length)h+=`<div class="of-s"><strong>Predložena prodajna cijena</strong><ul>${sg.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
   if(r.nItems){
     let s=`Slični artikli su prodali ukupno <b>${esc(r.sold30.toLocaleString('bs-BA',{maximumFractionDigits:1}))}</b> za 30 dana.`;
@@ -2152,21 +2161,39 @@ function renderSim(){
   }
   if(nab.ean&&!nab.ref)h+=`<div class="nref"><div class="nref-h"><span>Novi artikal, nema ga u bazi</span><button class="x" data-nab="clearean" aria-label="Ukloni">×</button></div><b>EAN ${esc(nab.ean)}</b><button class="btn btn-ghost btn-block" data-nab="off" style="margin-top:8px">Potraži naziv na internetu</button></div>`;
   h+=`<div class="search nab-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="nabQ" type="search" placeholder="Npr. kikiriki 200" value="${esc(nab.q)}" autocomplete="off" enterkeyhint="search"></div>`;
-  h+=`<div class="of-in"><label>Cijena koju nudi dobavljač<input id="ofP" type="text" inputmode="decimal" placeholder="0,00 sa PDV-om" autocomplete="off"></label><label>Pakovanje<input id="ofS" type="text" placeholder="${esc(fmtSize(parseQuery(nab.q).qty,parseQuery(nab.q).kind)||'npr. 200 g')}" autocomplete="off"></label><label class="w">Dobavljač (za čuvanje ponude)<input id="ofD" type="text" placeholder="naziv dobavljača" autocomplete="off"></label></div>`;
+  h+=`<div class="of-in"><label>Nabavna koju nudi (s PDV)<input id="ofP" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off"></label><label>Pakovanje<input id="ofS" type="text" value="${esc(nab.size||'')}" placeholder="${esc(fmtSize(parseQuery(nab.q).qty,parseQuery(nab.q).kind||'m')||'npr. 200 g')}" autocomplete="off"></label><label class="w">Dobavljač (za čuvanje ponude)<input id="ofD" type="text" placeholder="naziv dobavljača" autocomplete="off"></label></div>`;
   h+=`<div id="ofOut"></div><div id="simOut">${simListHTML()}</div>`;
   h+=offersHTML();
   return h;
 }
 let lastSim=null;
+function nabTarget(){
+  const t=(nab.size||'').trim();
+  if(t){const p=parseQuery('x '+t);if(p.qty)return{qty:p.qty,kind:p.kind}}
+  const q=parseQuery(nab.q);return q.qty?{qty:q.qty,kind:q.kind}:null;
+}
+function nearSize(g,T){const p=g._p;if(!p||!p.qty||p.perKg)return false;if(T.kind&&p.kind!==T.kind)return false;return Math.min(p.qty,T.qty)/Math.max(p.qty,T.qty)>=0.8}
 function simListHTML(){
-  if(!nab.q.trim()){lastSim=null;return `<p class="hint">Ukucaj šta je artikal i pakovanje (npr. „kikiriki 200“, „sok jabuka 1l“). Program nađe sve slične koje imamo, od svih dobavljača, i uporedi cijene po kg ili litru.</p>`}
-  lastSim=findSimilar(nab.q,nab.ref);
+  if(!nab.q.trim()){lastSim=null;return `<p class="hint">Ukucaj šta je artikal i pakovanje (npr. „kikiriki 200“, „sok jabuka 1l“). Program nađe sve slične artikle koje imamo, od svih dobavljača.</p>`}
+  const T=nabTarget();
+  lastSim=findSimilar(nab.q,nab.ref,T);
   const L=lastSim.list;
+  lastSim.near=T?L.filter(x=>nearSize(x.g,T)):null;
   if(!L.length)return `<p class="hint">Nema sličnih artikala za „${esc(nab.q)}“. Probaj kraći naziv, npr. samo „kikiriki“.</p>`;
-  const ups=L.map(x=>{const i=nabInfo(x.g);return unitPrice(i.buy,i.p)}).filter(isFinite);
+  const base=T&&!nab.allSizes?lastSim.near:L;
+  const ups=base.map(x=>{const i=nabInfo(x.g);return unitPrice(i.buy,i.p)}).filter(isFinite);
   const bestUP=ups.length>1?Math.min(...ups):NaN;
-  const shown=nab.more?L:L.slice(0,20);
-  return `<h3 class="nab-h">${L.length>=60?'60+':L.length} sličnih artikala${lastSim.qp.qty?`, najbliži pakovanju ${esc(fmtSize(lastSim.qp.qty,lastSim.qp.kind||'m'))} prvi`:''}</h3><div class="sims">${shown.map(x=>simRow(x,bestUP)).join('')}</div>${L.length>shown.length?`<button class="btn btn-ghost btn-block" data-nab="more" style="margin-top:8px">Prikaži još ${L.length-shown.length}</button>`:''}`;
+  const shown=nab.more?base:base.slice(0,20);
+  let h='';
+  if(T){
+    const sz=esc(fmtSize(T.qty,T.kind||'m')),nOther=L.length-lastSim.near.length;
+    h+=`<div class="nab-hrow"><h3 class="nab-h">${nab.allSizes?`${L.length>=60?'60+':L.length} sličnih, sva pakovanja`:`${lastSim.near.length} sličnih u pakovanju oko ${sz}`}</h3>${nOther>0||nab.allSizes?`<button class="chip-btn" data-nab="sizes">${nab.allSizes?`Samo oko ${sz}`:`I ostala pakovanja (${nOther})`}</button>`:''}</div>`;
+    if(!base.length)h+=`<p class="hint">Nema sličnih u pakovanju oko ${sz} (od ${esc(fmtSize(T.qty*0.8,T.kind||'m'))} do ${esc(fmtSize(T.qty*1.25,T.kind||'m'))}).</p>`;
+  }else h+=`<h3 class="nab-h">${L.length>=60?'60+':L.length} sličnih artikala</h3>`;
+  h+=`<p class="nab-vat">Sve cijene su sa PDV-om.</p>`;
+  h+=`<div class="sims">${shown.map(x=>simRow(x,bestUP)).join('')}</div>`;
+  if(base.length>shown.length)h+=`<button class="btn btn-ghost btn-block" data-nab="more" style="margin-top:8px">Prikaži još ${base.length-shown.length}</button>`;
+  return h;
 }
 function updateOffer(){
   const out=$('#ofOut');if(!out)return;
@@ -2284,8 +2311,9 @@ let nabT;
 function bindNab(){
   const q=$('#nabQ');
   if(q){
-    q.addEventListener('input',()=>{nab.q=q.value;nab.more=false;clearTimeout(nabT);nabT=setTimeout(()=>{$('#simOut').innerHTML=simListHTML();const s=$('#ofS');if(s){const p=parseQuery(nab.q);s.placeholder=fmtSize(p.qty,p.kind||'m')||'npr. 200 g'}updateOffer()},160)});
-    ['#ofP','#ofS'].forEach(id=>$(id).addEventListener('input',updateOffer));
+    q.addEventListener('input',()=>{nab.q=q.value;nab.more=false;nab.allSizes=false;clearTimeout(nabT);nabT=setTimeout(()=>{$('#simOut').innerHTML=simListHTML();const s=$('#ofS');if(s){const p=parseQuery(nab.q);s.placeholder=fmtSize(p.qty,p.kind||'m')||'npr. 200 g'}updateOffer()},160)});
+    $('#ofP').addEventListener('input',updateOffer);
+    $('#ofS').addEventListener('input',()=>{nab.size=$('#ofS').value;nab.more=false;clearTimeout(nabT);nabT=setTimeout(()=>{$('#simOut').innerHTML=simListHTML();updateOffer()},200)});
   }
   const sq=$('#nabSup');if(sq)sq.addEventListener('input',()=>{nab.supQ=sq.value;clearTimeout(nabT);nabT=setTimeout(()=>{const p=sq.selectionStart;renderNab();const n=$('#nabSup');n.focus();try{n.setSelectionRange(p,p)}catch(e){}},250)});
   [['#nsOrder','orderDays',1,90],['#nsWarn','warnDays',1,60],['#nsMargin','minMargin',0,100]].forEach(([id,k,lo,hi])=>{const e=$(id);if(e)e.addEventListener('change',()=>{const v=Math.min(hi,Math.max(lo,parseInt(e.value,10)||lo));settings.nab[k]=v;saveLS();renderNab()})});
@@ -2302,6 +2330,7 @@ $('#nabBody').addEventListener('click',async e=>{
   else if(act==='clearean'){nab.ean='';renderNab()}
   else if(act==='saveoffer')saveOffer();
   else if(act==='more'){nab.more=true;$('#simOut').innerHTML=simListHTML()}
+  else if(act==='sizes'){nab.allSizes=!nab.allSizes;nab.more=false;$('#simOut').innerHTML=simListHTML()}
   else if(act==='off')offLookup();
   else if(act==='share'||act==='copy'){
     const t=ordText(a.dataset.sup);
@@ -2333,7 +2362,7 @@ function renderNabKeep(){
   if(id){const e=$('#'+id);if(e){e.focus();try{e.setSelectionRange(pos,pos)}catch(_){}}}
 }
 function openNab(opts){
-  nab=Object.assign(nab,{sec:'sim',ref:null,ean:''},opts||{});
+  nab=Object.assign(nab,{sec:'sim',ref:null,ean:'',size:'',allSizes:false,more:false},opts||{});
   closeSheet();go('nab');
   setTimeout(()=>{const q=$('#nabQ');if(q&&!nab.q)q.focus()},50);
 }
